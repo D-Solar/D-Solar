@@ -1,8 +1,10 @@
 import { Metadata } from 'next';
 import connectDB from '@/lib/mongodb';
 import Blog from '@/models/Blog';
+import { getBlogImageSrc } from '@/lib/blogImage';
 
 interface BlogPost {
+  _id: unknown;
   title: string;
   shortDescription: string;
   content: string;
@@ -11,6 +13,7 @@ interface BlogPost {
   category: string;
   tags: string[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 const trimDescription = (text: string, maxLength = 158) => {
@@ -43,7 +46,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const description = trimDescription(
       blog.shortDescription || `Read about ${blog.title} and practical solar insights for homes and businesses in the Philippines.`
     );
-    const imageUrl = blog.imageUrl || `${baseUrl}/images/default-blog.jpg`;
+    const imageSrc = blog.imageUrl
+      ? getBlogImageSrc(String(blog._id), blog.imageUrl, blog.updatedAt)
+      : '/images/default-blog.jpg';
+    const imageUrl = imageSrc.startsWith('/') ? `${baseUrl}${imageSrc}` : imageSrc;
     const seoKeywords = [
       ...(blog.tags || []),
       blog.category,

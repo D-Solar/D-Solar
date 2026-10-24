@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import connectDB from '@/lib/mongodb';
 import Blog from '@/models/Blog';
+import { getBlogImageSrc } from '@/lib/blogImage';
 
 interface BlogPost {
   id: string;
@@ -59,17 +60,22 @@ export default async function Blogs() {
       .limit(BLOGS_PAGE_LIMIT)
       .lean<Array<Record<string, unknown>>>();
 
-    blogs = posts.map((post) => ({
-      id: String(post._id),
-      title: String(post.title || ''),
-      slug: String(post.slug || ''),
-      shortDescription: post.shortDescription
-        ? truncateContent(String(post.shortDescription), 220)
-        : undefined,
-      imageUrl: String(post.imageUrl || '/default-blog-image.jpg'),
-      createdAt: toIsoString(post.createdAt),
-      updatedAt: toIsoString(post.updatedAt || post.createdAt),
-    }));
+    blogs = posts.map((post) => {
+      const id = String(post._id);
+      const updatedAt = toIsoString(post.updatedAt || post.createdAt);
+
+      return {
+        id,
+        title: String(post.title || ''),
+        slug: String(post.slug || ''),
+        shortDescription: post.shortDescription
+          ? truncateContent(String(post.shortDescription), 220)
+          : undefined,
+        imageUrl: getBlogImageSrc(id, String(post.imageUrl || '/default-blog-image.jpg'), updatedAt),
+        createdAt: toIsoString(post.createdAt),
+        updatedAt,
+      };
+    });
   } catch (err) {
     error = err instanceof Error ? err.message : 'An error occurred while loading blog posts.';
   }

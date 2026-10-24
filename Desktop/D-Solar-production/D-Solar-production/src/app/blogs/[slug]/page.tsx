@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import connectDB from '@/lib/mongodb';
 import Blog from '@/models/Blog';
+import { getBlogImageSrc } from '@/lib/blogImage';
 
 interface BlogPost {
   id: string;
@@ -132,18 +133,21 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     notFound();
   }
 
+  const blogId = String(blogDoc._id);
+  const blogUpdatedAt = toIsoString(blogDoc.updatedAt || blogDoc.createdAt);
+
   const blog: BlogPost = {
-    id: String(blogDoc._id),
+    id: blogId,
     title: String(blogDoc.title || ''),
     slug: String(blogDoc.slug || ''),
     content: String(blogDoc.content || ''),
     shortDescription: blogDoc.shortDescription ? String(blogDoc.shortDescription) : undefined,
-    imageUrl: String(blogDoc.imageUrl || '/default-blog-image.jpg'),
+    imageUrl: getBlogImageSrc(blogId, String(blogDoc.imageUrl || '/default-blog-image.jpg'), blogUpdatedAt),
     author: blogDoc.author ? String(blogDoc.author) : 'D-Solar Team',
     category: blogDoc.category ? String(blogDoc.category) : undefined,
     tags: Array.isArray(blogDoc.tags) ? blogDoc.tags.map((tag) => String(tag)) : [],
     createdAt: toIsoString(blogDoc.createdAt),
-    updatedAt: toIsoString(blogDoc.updatedAt || blogDoc.createdAt),
+    updatedAt: blogUpdatedAt,
   };
 
   const relatedQuery: Array<Record<string, unknown>> = [];
